@@ -1,6 +1,10 @@
 package com.toddmo.apps.capture.ui.main;
 
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
+import android.media.AudioTrack;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,13 +48,55 @@ public class PlaybackFragment extends Fragment {
 
 //        final TextView textView = root.findViewById(R.id.section_label); // binding.sectionLabel;
 //        textView.setText("hello from home");
-
-        final Button btn = root.findViewById(R.id.helloworldbtn);
+        Log.d(LOG_TAG, "onCreateView");
+        final Button btn = root.findViewById(R.id.playback);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Hello world from home button!", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Log.d(LOG_TAG, "playback btn clicked");
+
+                Thread playbackThread  = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(LOG_TAG, "playback thread running");
+                        int channelMask = AudioFormat.CHANNEL_OUT_MONO;
+                        int audioFormat = AudioFormat.ENCODING_PCM_FLOAT;
+                        int sampleRate = 8000;
+                        int minBufferSizeInBytes = AudioTrack.getMinBufferSize(sampleRate, channelMask, audioFormat);
+                        AudioTrack at = new AudioTrack.Builder()
+                                .setAudioAttributes(new AudioAttributes.Builder()
+                                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                                        .build())
+                                .setAudioFormat(new AudioFormat.Builder()
+                                        .setChannelMask(channelMask)
+                                        .setEncoding(audioFormat)
+                                        .setSampleRate(sampleRate)
+                                        .build())
+                                .setBufferSizeInBytes(minBufferSizeInBytes)
+                                .build();
+                        Log.d(LOG_TAG, "AudioTrack initiated");
+
+                        float[] sineData = new float[sampleRate * 360];
+                        for (int i=0;i<sineData.length;i++) {
+//                            sineData[i] =  255f * (float)Math.sin(Math.PI / 360 / 8000 * 1600 * i);
+                            sineData[i] = i % 32; // (float)Math.random();
+                        }
+                        Log.d(LOG_TAG, "sineData initiated");
+                        at.play();
+                        int offset = 0;
+                        while (true) {
+                            int writeSize = at.write(sineData, offset, minBufferSizeInBytes, AudioTrack.WRITE_BLOCKING);
+                            offset += writeSize;
+                            if (offset > sineData.length) {
+                                offset = 0;
+                            }
+                            Log.v(LOG_TAG, "write " + writeSize);
+                        }
+                    }
+                });
+
+                playbackThread.start();
             }
         });
         return root;

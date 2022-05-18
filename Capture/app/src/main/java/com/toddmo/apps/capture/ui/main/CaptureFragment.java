@@ -1,9 +1,15 @@
 package com.toddmo.apps.capture.ui.main;
 
+import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
@@ -29,7 +35,9 @@ public class CaptureFragment extends Fragment {
     private PlaceHolderPageViewModel placeHolderPageViewModel;
     private FragmentMainBinding binding;
 
-    private SurfaceView surface = null;
+    private Thread mRecordThread = null;
+
+    private WaveGraphView waveGraph = null;
 
     public static CaptureFragment newInstance() {
         CaptureFragment fragment = new CaptureFragment();
@@ -61,31 +69,74 @@ public class CaptureFragment extends Fragment {
             }
         });
 
-        surface = root.findViewById(R.id.surfaceView);
-        SurfaceHolder holder = surface.getHolder();
-        holder.addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-                Log.d(LOG_TAG, "surfaceCreated");
-            }
+        waveGraph = root.findViewById(R.id.wavegraph);
 
+        Button rcbtn = (Button)root.findViewById(R.id.recordcontrol);
+        rcbtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-                Log.d(LOG_TAG, "surfaceChanged " + i + ", " + i1 + ", " + i2);
-                Canvas c = holder.lockCanvas();
-                Paint paint = new Paint();
-                paint.setColor(0xff0000ff);
-                c.drawRect(new Rect(0, 0, i1, i2), paint);
-                holder.unlockCanvasAndPost(c);
-            }
+            public void onClick(View view) {
+                Thread mRecordThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(LOG_TAG, "RecordThread running");
+                        int audioSource = MediaRecorder.AudioSource.MIC;
+//                int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+                        int audioFormat = AudioFormat.ENCODING_PCM_FLOAT;
+                        int sampleRate = 8000;
+                        int channelMask = AudioFormat.CHANNEL_IN_MONO;
+                        int minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelMask, audioFormat);
+                        @SuppressLint("MissingPermission")
+                        AudioRecord ar = new AudioRecord.Builder()
+                                .setAudioSource(audioSource)
+                                .setAudioFormat(new AudioFormat.Builder()
+                                        .setEncoding(audioFormat)
+                                        .setSampleRate(sampleRate)
+                                        .setChannelMask(channelMask)
+                                        .build())
+                                .setBufferSizeInBytes(2*minBufferSize)
+                                .build();
+                        ar.startRecording();
+                        int c = 0;
+                        while (true) {
+                            float[] buffer = new float[2*minBufferSize];
+                            int readSize = ar.read(buffer, 0, buffer.length, AudioRecord.READ_BLOCKING);
+                            for (int i=0;i<readSize;i++) {
+                                c++;
+                                if (c % 91 == 0) {
+                                    waveGraph.pushData(buffer[i]);
+                                }
+                            }
+                        }
 
-            @Override
-            public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-                Log.d(LOG_TAG, "surfaceDestroyed");
+                    }
+                });
+
+                mRecordThread.start();
+                Log.d(LOG_TAG, "RecordThread initiated");
             }
         });
 
+
+
         return root;
+    }
+
+    @Override
+    public void onPause() {
+        Log.d(LOG_TAG, "onPause");
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        Log.d(LOG_TAG, "onResume");
+        super.onResume();
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        Log.d(LOG_TAG, "onHiddenChanged " + hidden);
+        super.onHiddenChanged(hidden);
     }
 
     @Override

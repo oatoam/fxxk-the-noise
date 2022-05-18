@@ -1,5 +1,7 @@
 package com.toddmo.apps.capture.ui.main;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +12,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -50,11 +54,20 @@ public class HomePageFragment extends Fragment {
 //        final TextView textView = root.findViewById(R.id.section_label); // binding.sectionLabel;
 //        textView.setText("hello from home");
 
-        final Button btn = root.findViewById(R.id.helloworldbtn);
+        final Button btn = root.findViewById(R.id.permissionbtn);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Hello world from home button!", Snackbar.LENGTH_LONG)
+                String[] requiredPermissions = {
+                        Manifest.permission.RECORD_AUDIO,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                };
+                for (String perm: requiredPermissions) {
+                    if (ContextCompat.checkSelfPermission(getContext(), perm) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(getActivity(), new String[] {perm}, 0);
+                    }
+                }
+                Snackbar.make(view, "Permission grant done.", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });

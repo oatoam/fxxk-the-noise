@@ -3,7 +3,8 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="../../../../../../../mnt/data/projects/test/android/fxxk-the-noise/Capture/app/src/main/res/layout/activity_main.xml" value="0.4759963768115942" />
+        <entry key="../../../../../../../layout/custom_preview.xml" value="0.32864583333333336" />
+        <entry key="../../../../../../../mnt/data/projects/test/android/fxxk-the-noise/Capture/app/src/main/res/layout/activity_main.xml" value="0.33" />
         <entry key="../../../../../../../mnt/data/projects/test/android/fxxk-the-noise/Capture/app/src/main/res/layout/fragment_capture.xml" value="0.29791666666666666" />
         <entry key="../../../../../../../mnt/data/projects/test/android/fxxk-the-noise/Capture/app/src/main/res/layout/fragment_configuration.xml" value="0.29791666666666666" />
         <entry key="../../../../../../../mnt/data/projects/test/android/fxxk-the-noise/Capture/app/src/main/res/layout/fragment_homepage.xml" value="0.29791666666666666" />
